@@ -5,6 +5,7 @@
 
 #define _USE_MATH_DEFINES
 #include <cmath>
+#include <algorithm>
 using std::pow;
 using std::ceil;
 using std::acos;
@@ -18,6 +19,8 @@ using std::string;
 using std::vector;
 
 using namespace Survival;
+
+#define M_PI 3.1415926535
 
 Nucleus_Integral::Nucleus_Integral(const CellLine &cellLineRef,
                              const double xPosition,

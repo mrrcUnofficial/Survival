@@ -1,9 +1,9 @@
 #include "usefulFunctions.h"
 
-#include <gsl/gsl_rng.h>
+/*#include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_multifit.h>
-#include <gsl/gsl_sf_gamma.h>
+#include <gsl/gsl_sf_gamma.h>*/
 
 #include <map>
 using std::map;
@@ -94,6 +94,7 @@ public:
 
         string betheBlochFile(dataPath);
         betheBlochFile += "/" + ionType + "_Srim.dat";
+        //betheBlochFile += "/" + ionType + "_G4opt3.dat";
         ifstream inBetheBlochFile(betheBlochFile.c_str(), ios::in);
         if( !inBetheBlochFile )
         {
@@ -261,44 +262,44 @@ void fit_LQ(vector<double> dose,
             double &chiSquared, double &incompleteGammaQ)
 {
     size_t i;
+    return;
+    //gsl_matrix *predictorVariableMatrix = gsl_matrix_alloc( dose.size(), 2 );
+    //gsl_vector *survivalVector = gsl_vector_alloc( survival.size() );
+    //gsl_vector *weightVector = gsl_vector_alloc( survivalUncertainty.size() );
+    //gsl_vector *coefficientVector = gsl_vector_alloc( 2 );
+    //gsl_matrix *covarianceMatrix = gsl_matrix_alloc( 2, 2 );
 
-    gsl_matrix *predictorVariableMatrix = gsl_matrix_alloc( dose.size(), 2 );
-    gsl_vector *survivalVector = gsl_vector_alloc( survival.size() );
-    gsl_vector *weightVector = gsl_vector_alloc( survivalUncertainty.size() );
-    gsl_vector *coefficientVector = gsl_vector_alloc( 2 );
-    gsl_matrix *covarianceMatrix = gsl_matrix_alloc( 2, 2 );
+    //for( i = 0; i < dose.size(); i++ )
+    //{
+    //    gsl_matrix_set(predictorVariableMatrix, i, 0, dose[i]);
+    //    gsl_matrix_set(predictorVariableMatrix, i, 1, pow(dose[i], 2));
 
-    for( i = 0; i < dose.size(); i++ )
-    {
-        gsl_matrix_set(predictorVariableMatrix, i, 0, dose[i]);
-        gsl_matrix_set(predictorVariableMatrix, i, 1, pow(dose[i], 2));
+    //    gsl_vector_set(survivalVector, i, -log(survival[i]));
+    //    gsl_vector_set(weightVector, i, 1/pow(survivalUncertainty[i]/survival[i],2));
+    //}
 
-        gsl_vector_set(survivalVector, i, -log(survival[i]));
-        gsl_vector_set(weightVector, i, 1/pow(survivalUncertainty[i]/survival[i],2));
-    }
+    //gsl_multifit_linear_workspace *workspace = gsl_multifit_linear_alloc(dose.size(), 2);
+    //gsl_multifit_wlinear(predictorVariableMatrix,
+    //                     weightVector,
+    //                     survivalVector,
+    //                     coefficientVector,
+    //                     covarianceMatrix,
+    //                     &chiSquared,
+    //                     workspace);
 
-    gsl_multifit_linear_workspace *workspace = gsl_multifit_linear_alloc(dose.size(), 2);
-    gsl_multifit_wlinear(predictorVariableMatrix,
-                         weightVector,
-                         survivalVector,
-                         coefficientVector,
-                         covarianceMatrix,
-                         &chiSquared,
-                         workspace);
+    //alpha = gsl_vector_get(coefficientVector, 0);
+    //alphaUncertainty = sqrt( gsl_matrix_get(covarianceMatrix, 0, 0) );
+    //beta = gsl_vector_get(coefficientVector, 1);
+    //betaUncertainty = sqrt( gsl_matrix_get(covarianceMatrix, 1, 1) );
 
-    alpha = gsl_vector_get(coefficientVector, 0);
-    alphaUncertainty = sqrt( gsl_matrix_get(covarianceMatrix, 0, 0) );
-    beta = gsl_vector_get(coefficientVector, 1);
-    betaUncertainty = sqrt( gsl_matrix_get(covarianceMatrix, 1, 1) );
+    //incompleteGammaQ = gsl_sf_gamma_inc_Q( (dose.size()-2.0)/2.0, chiSquared/2.0 );
 
-    incompleteGammaQ = gsl_sf_gamma_inc_Q( (dose.size()-2.0)/2.0, chiSquared/2.0 );
-
-    gsl_matrix_free(predictorVariableMatrix);
-    gsl_vector_free(survivalVector);
-    gsl_vector_free(weightVector);
-    gsl_vector_free(coefficientVector);
-    gsl_matrix_free(covarianceMatrix);
-    gsl_multifit_linear_free(workspace);
+    //gsl_matrix_free(predictorVariableMatrix);
+    //gsl_vector_free(survivalVector);
+    //gsl_vector_free(weightVector);
+    //gsl_vector_free(coefficientVector);
+    //gsl_matrix_free(covarianceMatrix);
+    //gsl_multifit_linear_free(workspace);
 }
     
 //------------------------------------------------------------------------------

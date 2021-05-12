@@ -7,9 +7,9 @@
 #include "Nucleus_tMKM.h"
 #include "usefulFunctions.h"
 
-#include <gsl/gsl_randist.h>
-#include <gsl/gsl_multifit.h>
-#include <gsl/gsl_sf_gamma.h>
+//#include <gsl/gsl_randist.h>
+//#include <gsl/gsl_multifit.h>
+//#include <gsl/gsl_sf_gamma.h>
 
 #include <sstream>
 using std::ostringstream;
@@ -52,10 +52,17 @@ using std::string;
 using std::vector;
 
 #include <sys/types.h>
-#include <unistd.h>
+//#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <omp.h>
 
+#include "globals.hh"
+#include "G4RandomTools.hh"
+
 using namespace Survival;
+
+//#define M_PI 3.1415926535
 
 Calculus::Calculus(const Tracks &tracksRef,
                    const CellLine &cellLineRef,
@@ -70,28 +77,46 @@ Calculus::Calculus(const Tracks &tracksRef,
   savePrefix( save_prefix ),
   model( model_ )
 {
-    randomGenerator = gsl_rng_alloc(gsl_rng_taus);
-    long seed = randomSeed;
-    cout << "Calculus object created -- ";
-    if (randomSeed == 0) {
-        seed = time(NULL) * getpid();
-        cout << "Setting random seed: " << seed << endl;
-    } else
-        cout << "Using external random seed: " << seed << endl;
-    
+#ifdef WIN32
+  CLHEP::Ranlux64Engine defaultEngine(1234567, 4);
+  G4Random::setTheEngine(&defaultEngine);
+  long seed = randomSeed;
+  if (0 == randomSeed) {
+    seed = time(NULL);
+    std::cout << "RE seed set to: " << seed << std::endl;
+  }
+  else {
+    std::cout << "Using external random seed: " << seed << endl;
+  }
+  G4Random::setTheSeed(seed);
+#else
+  randomGenerator = gsl_rng_alloc(gsl_rng_taus);
+  long seed = randomSeed;
+  cout << "Calculus object created -- ";
+  if (randomSeed == 0) {
+    seed = time(NULL) * getpid();
+    cout << "Setting random seed: " << seed << endl;
+  }
+  else
+    cout << "Using external random seed: " << seed << endl;
+
+  gsl_rng_set(randomGenerator, seed);
+#endif
     if (p_type!=0)
         nThreads=p_type;
     else
         nThreads=omp_get_num_procs();
     
-    gsl_rng_set(randomGenerator, seed);
+    //gsl_rng_set(randomGenerator, seed);
 }
 
 //------------------------------------------------------------------------------
 
 Calculus::~Calculus()
 {
+#ifndef WIN32
    gsl_rng_free(randomGenerator);
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -254,7 +279,11 @@ vector<double> Calculus::generateSequence(int nEv,
     }
     vector<double> tt(nEv);
     for (int i=0; i<nEv; ++i)
+#ifdef WIN32
+        tt[i] = begin + duration * G4UniformRand();
+#else
         tt[i] = begin + duration * gsl_rng_uniform(randomGenerator);
+#endif
     sort(tt.begin(), tt.end());
     return tt;
 }
@@ -287,12 +316,21 @@ void Calculus::histogram_dose_survival_p(const double doseImposed, // implementa
     {
         area = M_PI * pow(tracks[k].getRadius() + r_nucleus, 2);
         meanNumber = totalFluence * tracks[k].getWeight()/totalWeight * area;
+#ifndef WIN32
         numberOfExtractions = gsl_ran_poisson(randomGenerator, meanNumber);
+#else
+        numberOfExtractions = CLHEP::RandPoisson(G4Random::getTheEngine(), meanNumber).fire();
+#endif
         
         for(int j = 0; j < numberOfExtractions; j++)
         {
-            rho_track = sqrt( area / M_PI ) * sqrt( gsl_rng_uniform(randomGenerator) );
+#ifdef WIN32
+            rho_track = sqrt( area / M_PI ) * sqrt( G4UniformRand() );
+            phi_track = 2 * M_PI * G4UniformRand();
+#else
+            rho_track = sqrt(area / M_PI) * sqrt(gsl_rng_uniform(randomGenerator));
             phi_track = 2 * M_PI * gsl_rng_uniform(randomGenerator);
+#endif
             x_track = rho_track * cos(phi_track);
             y_track = rho_track * sin(phi_track);
             
@@ -335,7 +373,11 @@ void Calculus::histogram_dose_survival_t(Nucleus &nucleus_cp,
     for(int k = 0; k < tracks.size(); k++) {
         area = M_PI * pow(tracks[k].getRadius() + r_nucleus, 2);
         meanNumber = totalFluence * tracks[k].getWeight()/totalWeight * area;
+#ifndef WIN32
         numberOfExtractions[k] = gsl_ran_poisson(randomGenerator, meanNumber);
+#else
+        numberOfExtractions[k] = CLHEP::RandPoisson(G4Random::getTheEngine(), meanNumber).fire();
+#endif
         totTracks+=numberOfExtractions[k];
     }
     
@@ -343,8 +385,13 @@ void Calculus::histogram_dose_survival_t(Nucleus &nucleus_cp,
     int it=0;
     for(int k = 0; k < tracks.size(); k++) {
         for(int j = 0; j < numberOfExtractions[k]; j++) {
-            rho_track = sqrt( area / M_PI ) * sqrt( gsl_rng_uniform(randomGenerator) );
+#ifdef WIN32
+            rho_track = sqrt( area / M_PI ) * sqrt( G4UniformRand() );
+            phi_track = 2 * M_PI * G4UniformRand();
+#else
+            rho_track = sqrt(area / M_PI) * sqrt(gsl_rng_uniform(randomGenerator));
             phi_track = 2 * M_PI * gsl_rng_uniform(randomGenerator);
+#endif
             x_track = rho_track * cos(phi_track);
             y_track = rho_track * sin(phi_track);
             
@@ -391,12 +438,21 @@ void Calculus::histogram_dose_survival_with_domains(const double doseImposed,
     {
         area = M_PI * pow(tracks[k].getRadius() + r_nucleus, 2);
         meanNumber = totalFluence * tracks[k].getWeight()/totalWeight * area;
+#ifdef WIN32
+        numberOfExtractions = CLHEP::RandPoisson(G4Random::getTheEngine(), meanNumber).fire();
+#else
         numberOfExtractions = gsl_ran_poisson(randomGenerator, meanNumber);
+#endif
         
         for(int j = 0; j < numberOfExtractions; j++)
         {
-            rho_track = sqrt( area / M_PI ) * sqrt( gsl_rng_uniform(randomGenerator) );
+#ifdef WIN32
+            rho_track = sqrt( area / M_PI ) * sqrt( G4UniformRand() );
+            phi_track = 2 * M_PI * G4UniformRand();
+#else
+            rho_track = sqrt(area / M_PI) * sqrt(gsl_rng_uniform(randomGenerator));
             phi_track = 2 * M_PI * gsl_rng_uniform(randomGenerator);
+#endif
             x_track = rho_track * cos(phi_track);
             y_track = rho_track * sin(phi_track);
             
@@ -438,7 +494,11 @@ void Calculus::random_dose_survival_p(const double doseImposed,
     const double CONV = 160.2177;  //(J*um^3)/(MeV*dm^3) : Constant of conversion (MeV*dm^3)/(Kg*um^3) -> Gy
     double totalFluence = tracks.getDensity() * doseImposed / (CONV * meanLet);  //um^(-2)
     double meanNumber = totalFluence * M_PI * pow(interactionRadius, 2);
+#ifdef WIN32
+    int numberOfExtractions = CLHEP::RandPoisson(G4Random::getTheEngine(), meanNumber).fire();
+#else
     int numberOfExtractions = gsl_ran_poisson(randomGenerator, meanNumber);
+#endif
     
     int extractedTrackIndex;
     Track *extractedTrack;
@@ -447,11 +507,20 @@ void Calculus::random_dose_survival_p(const double doseImposed,
     
     for(int k = 0; k < numberOfExtractions; k++)
     {
+#ifdef WIN32
+      extractedTrackIndex = CLHEP::RandFlat::shootInt(tracks.size());
+      rho_track = interactionRadius * sqrt(G4UniformRand());
+#else
         extractedTrackIndex = gsl_rng_get(randomGenerator) % tracks.size();
         rho_track = interactionRadius * sqrt( gsl_rng_uniform(randomGenerator) );
+#endif
         if( rho_track < nucleus_cp.getRadius() + tracks[extractedTrackIndex].getRadius() )
         {
+#ifdef WIN32
+            phi_track = 2 * M_PI * G4UniformRand();
+#else
             phi_track = 2 * M_PI * gsl_rng_uniform(randomGenerator);
+#endif
             x_track = rho_track * cos(phi_track);
             y_track = rho_track * sin(phi_track);
             

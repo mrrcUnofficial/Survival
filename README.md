@@ -1,3 +1,10 @@
+This is a fork of https://github.com/batuff/Survival/ toolkit.
+Added CMake build option
+
+Optional:
+- replace GSL library with CLHEP ones (not compatible with -calculusType MonteCarlo)
+
+
 Survival
 ========
 
