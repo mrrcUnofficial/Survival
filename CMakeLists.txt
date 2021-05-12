@@ -31,7 +31,7 @@ GENERATE_EXPORT_HEADER( Survival
              STATIC_DEFINE NPLibrary_BUILT_AS_STATIC
 )
 
-add_executable(Survival Survival.cpp ${sources} ${headers})
+add_executable(Survival src/main.cpp ${sources} ${headers})
 target_link_libraries(Survival)
 
 
