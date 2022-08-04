@@ -3,6 +3,7 @@
 #include "Track.h"
 
 #define _USE_MATH_DEFINES
+#include <gsl/gsl_rng.h>
 #include <cmath>
 using std::pow;
 

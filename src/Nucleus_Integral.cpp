@@ -5,6 +5,9 @@
 
 #define _USE_MATH_DEFINES
 #include <cmath>
+#ifdef WIN32
+#include <math.h>
+#endif
 using std::pow;
 using std::ceil;
 using std::acos;

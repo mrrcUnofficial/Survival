@@ -1,6 +1,10 @@
 #ifndef CALCULUS_H
 #define CALCULUS_H
 
+#ifdef WIN32
+#define GSL_DLL
+#endif
+
 #include <gsl/gsl_rng.h>
 #include <string>
 #include <vector>

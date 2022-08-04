@@ -1,6 +1,10 @@
 #ifndef NUCLEUS_MONTECARLO_H
 #define NUCLEUS_MONTECARLO_H
 
+#ifdef WIN32
+#define GSL_DLL
+#endif
+
 #include "Nucleus_Pixel.h"
 #include "Tracks.h"
 

@@ -206,7 +206,7 @@ double CellLine::damageEnhancement(const double dose) const
         long int position, position_min, position_max;
         int i, j;
         int Found, Found2;
-        long int FoundPositions[2*base_Pairs];
+        long *FoundPositions = new long[2*base_Pairs];
         long int NSSB, NDSB, N2SB, nNSSB, nNDSB;
         
         NSSB=0;

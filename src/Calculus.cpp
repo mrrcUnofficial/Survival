@@ -7,6 +7,7 @@
 #include "Nucleus_tMKM.h"
 #include "usefulFunctions.h"
 
+#include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_multifit.h>
 #include <gsl/gsl_sf_gamma.h>
@@ -52,7 +53,11 @@ using std::string;
 using std::vector;
 
 #include <sys/types.h>
+#ifndef WIN32
 #include <unistd.h>
+#else
+#include "windows.h"
+#endif
 #include <omp.h>
 
 using namespace Survival;
@@ -74,7 +79,11 @@ Calculus::Calculus(const Tracks &tracksRef,
     long seed = randomSeed;
     cout << "Calculus object created -- ";
     if (randomSeed == 0) {
+#ifdef WIN32
+      seed = time(NULL);
+#else
         seed = time(NULL) * getpid();
+#endif
         cout << "Setting random seed: " << seed << endl;
     } else
         cout << "Using external random seed: " << seed << endl;
